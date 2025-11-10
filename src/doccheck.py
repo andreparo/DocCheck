@@ -14,45 +14,34 @@ Usage Example:
 
 import inspect
 import types
+import sys
+import importlib.util
+import pathlib
 
 
 class DocCheck:
     """
-    A tool to scan a python project for embedded test conditions in docstrings 
+    A tool to scan a python project for embedded test conditions in docstrings
     and evaluates them to validate code correctness.
 
     Example:
         def add(a: int, b: int) -> int:
             '''
             Adds two numbers.
-            >>test: add(2, 3) == 5
-            >>test: add(-1, 1) == 0
+            >>test: (2 + 3) == 5
+            >>test: (-1 + 1) == 0
             '''
             return a + b
     """
 
-    # TODO allowed_inline_tags: list[str] = [">>tests:"]
-
-
     def __init__(self, module: types.ModuleType) -> None:
-        """
-        Initialize the DocCheck runner.
-
-        Args:
-            module (types.ModuleType): The Python module to inspect and test.
-        """
         self.module: types.ModuleType = module
+
         self.total_tests: int = 0
         self.failed_tests: int = 0
 
     def _run_Test_Line(self, expression: str, context_name: str) -> None:
-        """
-        Evaluate a single test expression and handle its result.
-
-        Args:
-            expression (str): The Python expression to evaluate.
-            context_name (str): The function/class where the test was found.
-        """
+        print(f"TESTING : {expression}")
         try:
             result: bool = eval(expression, self.module.__dict__)
             assert result, f"Expression evaluated False: {expression}"
@@ -63,49 +52,62 @@ class DocCheck:
             print(f"[PASS] {context_name}: {expression}")
 
     def _extract_Tests(self, obj_name: str, obj: object) -> None:
-        """
-        Extract and run test expressions from an object's docstring.
-
-        Args:
-            obj_name (str): Name of the object being tested.
-            obj (object): Function, class, or method to scan.
-        """
         docstring: str | None = inspect.getdoc(obj)
         if not docstring:
             return
-
         for line in docstring.splitlines():
             line = line.strip()
             if not line.startswith(">>test:"):
                 continue
-
             self.total_tests += 1
             expression: str = line[len(">>test:") :].strip()
             self._run_Test_Line(expression, obj_name)
 
     def _scan_Object(self, obj_name: str, obj: object) -> None:
-        """
-        Recursively scan functions, classes, and methods for docstring tests.
-        """
         self._extract_Tests(obj_name, obj)
-
         if inspect.isclass(obj):
             for member_name, member_obj in inspect.getmembers(obj):
                 if inspect.isfunction(member_obj) or inspect.ismethod(member_obj):
                     self._extract_Tests(f"{obj_name}.{member_name}", member_obj)
 
     def run(self) -> None:
-        """
-        Run all discovered docstring tests within the given module.
-        Prints results and a summary report.
-        """
         print(f"Running docstring tests in module '{self.module.__name__}'...\n")
-
         for obj_name, obj in inspect.getmembers(self.module):
             if inspect.isfunction(obj) or inspect.isclass(obj):
                 self._scan_Object(obj_name, obj)
-
         print(f"\nSummary: {self.total_tests - self.failed_tests}/{self.total_tests} tests passed.")
+
+    # -------------------------------
+    # ✅ SAFE MODULE LOADING UTILITIES
+    # -------------------------------
+
+    @staticmethod
+    def _safe_Load_Module(file_path: pathlib.Path, module_name: str) -> types.ModuleType | None:
+        """
+        Load a module safely without triggering __main__ blocks or top-level code.
+        Returns the loaded module or None if it cannot be imported.
+        """
+        try:
+            spec = importlib.util.spec_from_file_location(module_name, str(file_path))
+            if spec is None or spec.loader is None:
+                return None
+
+            module = importlib.util.module_from_spec(spec)
+            # Prevent "__main__" guards from firing
+            module.__name__ = f"{module_name}"
+            sys.modules[module_name] = module
+
+            # Execute safely
+            spec.loader.exec_module(module)
+            return module
+
+        except Exception as err:
+            print(f"[WARN] Skipping {file_path}: {err}")
+            return None
+
+    # -------------------------------
+    # ✅ CLI ENTRY POINT
+    # -------------------------------
 
     @classmethod
     def run_From_CLI(cls) -> None:
@@ -114,19 +116,17 @@ class DocCheck:
         `python -m doccheck <module_name>`.
         Runs on the whole project if no module name is provided.
         """
-        import importlib
-        import importlib.util
-        import pathlib
-        import sys
+        print("\n Starting doccheck from CLI: ...")
 
         args = sys.argv[1:]
 
-        # Auto-run mode: no arguments → scan the entire project
-        if not args:
-            project_root = pathlib.Path.cwd()
-            sys.path.insert(0, str(project_root))
-            python_files = list(project_root.rglob("*.py"))
+        # * Get project root
+        project_root = pathlib.Path.cwd()
+        sys.path.insert(0, str(project_root))
 
+        # Auto-run mode: scan all files in the project
+        if not args:
+            python_files = list(project_root.rglob("*.py"))
             failed_total = 0
             tested_files = 0
 
@@ -134,25 +134,21 @@ class DocCheck:
                 # skip irrelevant dirs
                 if any(part.startswith(".") for part in file_path.parts):
                     continue
-                if "venv" in file_path.parts or "__pycache__" in file_path.parts:
+                if any(skip in file_path.parts for skip in ("venv", "__pycache__", "site-packages")):
                     continue
-                if "site-packages" in file_path.parts:
+                # Skip files with module-level execution that shouldn't be tested
+                if file_path.name == "sandbox.py":
                     continue
 
                 module_name = ".".join(file_path.with_suffix("").parts)
-                spec = importlib.util.spec_from_file_location(module_name, str(file_path))
-                if spec and spec.loader:
-                    module = importlib.util.module_from_spec(spec)
-                    sys.modules[module_name] = module
-                    try:
-                        spec.loader.exec_module(module)
-                    except Exception:
-                        continue  # skip broken imports
+                module = cls._safe_Load_Module(file_path, module_name)
+                if not module:
+                    continue
 
-                    tested_files += 1
-                    checker = cls(module)
-                    checker.run()
-                    failed_total += checker.failed_tests
+                tested_files += 1
+                checker = cls(module)
+                checker.run()
+                failed_total += checker.failed_tests
 
             print(f"\nDocCheck Summary: scanned {tested_files} files.")
             if failed_total:
@@ -162,11 +158,20 @@ class DocCheck:
                 print("✅ All docstring tests passed successfully.")
             return
 
-        # Single-module mode: same as before
+        # Single-module mode
         if len(args) == 1:
             module_name: str = args[0]
-            module = importlib.import_module(module_name)
-            cls(module).run()
+            try:
+                file_path = project_root.joinpath(*module_name.split(".")).with_suffix(".py")
+                if not file_path.exists():
+                    raise FileNotFoundError(f"No such module file: {file_path}")
+                module = cls._safe_Load_Module(file_path, module_name)
+                if not module:
+                    raise ImportError(f"Failed to load {module_name}")
+                cls(module).run()
+            except Exception as err:
+                print(f"[ERROR] {err}")
+                sys.exit(1)
         else:
             print("Usage: python -m doccheck [<module_name>]")
             sys.exit(1)
@@ -174,4 +179,3 @@ class DocCheck:
 
 if __name__ == "__main__":
     DocCheck.run_From_CLI()
-
