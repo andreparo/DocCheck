@@ -1,6 +1,7 @@
 - id: doccheck
-  name: Run docstring assertions with DocCheck
-  entry: python -m src.doccheck_wrapper
-  language: python
-  additional_dependencies: ["-e ."]
+  name: Run DocCheck embedded tests
+  description: Runs embedded docstring tests across the project.
+  entry: python3 doccheck.py
+  language: system
+  types: [python]
   pass_filenames: false

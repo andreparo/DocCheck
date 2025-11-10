@@ -1,8 +1,12 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "doccheck"
-version = "1.0.0"
-description = "Docstring assertion checker for pre-commit"
+version = "0.1.22"
+description = "A minimal doctest-like tool for testing expressions inside docstrings"
+authors = [{ name = "Andrea Parodi", email = "andrea.parodi.mi@gmail.com" }]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.9"
+
+[project.urls]
+Homepage = "https://github.com/andreparo/DocCheck"
+Repository = "https://github.com/andreparo/DocCheck"
