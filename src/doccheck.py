@@ -56,7 +56,7 @@ class DocCheck:
                     self._extract_Tests(f"{obj_name}.{member_name}", member_obj)
 
     def run(self) -> None:
-        print(f"Running docstring tests in module '{self.module.__name__}'...\n")
+        #print(f"Running docstring tests in module '{self.module.__name__}'...\n")
         for obj_name, obj in inspect.getmembers(self.module):
             if inspect.isfunction(obj) or inspect.isclass(obj):
                 self._scan_Object(obj_name, obj)
