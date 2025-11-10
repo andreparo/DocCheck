@@ -147,6 +147,7 @@ class DocCheck:
                 sys.exit(1)
             else:
                 print("✅ All docstring tests passed successfully.")
+                sys.exit(1)
             return
 
         # Single-module mode
