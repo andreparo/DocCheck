@@ -34,8 +34,7 @@ class DocCheck:
             self.failed_tests += 1
             print(f"[FAIL] {context_name}: {expression} -> {error}")
         else:
-            pass
-            #print(f"[PASS] {context_name}: {expression}")
+            print(f"[PASS] {context_name}: {expression}")
 
     def _extract_Tests(self, obj_name: str, obj: object) -> None:
         docstring: str | None = inspect.getdoc(obj)
@@ -99,7 +98,7 @@ class DocCheck:
         `python -m doccheck <module_name>` or `python -m doccheck src/`.
         Runs on the whole project if no module name is provided.
         """
-        #print("\n Starting doccheck from CLI: ...")
+        print("\n Starting doccheck from CLI: ...")
 
         args = sys.argv[1:]
         project_root = pathlib.Path.cwd()
@@ -111,7 +110,7 @@ class DocCheck:
                 print(f"[ERROR] 'src/' directory not found at {src_path}")
                 sys.exit(1)
 
-            #print(f"Switching to 'src/' directory: {src_path}")
+            print(f"Switching to 'src/' directory: {src_path}")
             sys.path.insert(0, str(src_path))
             project_root = src_path
             args = args[1:]  # consume "src" argument
@@ -142,13 +141,12 @@ class DocCheck:
                 checker.run()
                 failed_total += checker.failed_tests
 
-            #print(f"\nDocCheck Summary: scanned {tested_files} files.")
+            print(f"\nDocCheck Summary: scanned {tested_files} files.")
             if failed_total:
                 print(f"❌ {failed_total} docstring tests failed.")
                 sys.exit(1)
             else:
-                #print("✅ All docstring tests passed successfully.")
-                pass
+                print("✅ All docstring tests passed successfully.")
             return
 
         # Single-module mode
