@@ -1,5 +1,6 @@
 - id: doccheck
   name: Run docstring assertions with DocCheck
-  entry: python -m src/doccheck_wrapper.py
+  entry: python -m src.doccheck_wrapper
   language: python
-  pass_filenames: false
+  additional_dependencies: ["-e ."]
+  pass_filenames: fals
