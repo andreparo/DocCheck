@@ -63,6 +63,7 @@ def main() -> None:
         sys.exit(1)
     else:
         print("✅ All docstring tests passed successfully.\n")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
