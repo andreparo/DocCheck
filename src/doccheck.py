@@ -1,17 +1,3 @@
-"""
-doccheck.py — a minimal and fast docstring test runner.
-
-Scans for lines starting with '>>test:' in docstrings of functions,
-classes, and methods. Evaluates each expression and asserts it is True.
-
-Usage Example:
-    from doccheck import DocCheck
-    import math_utils
-
-    checker = DocCheck(math_utils)
-    checker.run()
-"""
-
 import inspect
 import types
 import sys
@@ -36,7 +22,6 @@ class DocCheck:
 
     def __init__(self, module: types.ModuleType) -> None:
         self.module: types.ModuleType = module
-
         self.total_tests: int = 0
         self.failed_tests: int = 0
 
@@ -49,7 +34,8 @@ class DocCheck:
             self.failed_tests += 1
             print(f"[FAIL] {context_name}: {expression} -> {error}")
         else:
-            print(f"[PASS] {context_name}: {expression}")
+            pass
+            #print(f"[PASS] {context_name}: {expression}")
 
     def _extract_Tests(self, obj_name: str, obj: object) -> None:
         docstring: str | None = inspect.getdoc(obj)
@@ -93,11 +79,8 @@ class DocCheck:
                 return None
 
             module = importlib.util.module_from_spec(spec)
-            # Prevent "__main__" guards from firing
             module.__name__ = f"{module_name}"
             sys.modules[module_name] = module
-
-            # Execute safely
             spec.loader.exec_module(module)
             return module
 
@@ -113,34 +96,43 @@ class DocCheck:
     def run_From_CLI(cls) -> None:
         """
         Command-line entry point for `python -m doccheck` or
-        `python -m doccheck <module_name>`.
+        `python -m doccheck <module_name>` or `python -m doccheck src/`.
         Runs on the whole project if no module name is provided.
         """
-        print("\n Starting doccheck from CLI: ...")
+        #print("\n Starting doccheck from CLI: ...")
 
         args = sys.argv[1:]
-
-        # * Get project root
         project_root = pathlib.Path.cwd()
+
+        # handle "src/" case explicitly
+        if args and args[0].rstrip("/\\") == "src":
+            src_path = project_root / "src"
+            if not src_path.exists() or not src_path.is_dir():
+                print(f"[ERROR] 'src/' directory not found at {src_path}")
+                sys.exit(1)
+
+            #print(f"Switching to 'src/' directory: {src_path}")
+            sys.path.insert(0, str(src_path))
+            project_root = src_path
+            args = args[1:]  # consume "src" argument
+
         sys.path.insert(0, str(project_root))
 
-        # Auto-run mode: scan all files in the project
+        # Auto-run mode (no specific module given)
         if not args:
             python_files = list(project_root.rglob("*.py"))
             failed_total = 0
             tested_files = 0
 
             for file_path in python_files:
-                # skip irrelevant dirs
                 if any(part.startswith(".") for part in file_path.parts):
                     continue
                 if any(skip in file_path.parts for skip in ("venv", "__pycache__", "site-packages")):
                     continue
-                # Skip files with module-level execution that shouldn't be tested
                 if file_path.name == "sandbox.py":
                     continue
 
-                module_name = ".".join(file_path.with_suffix("").parts)
+                module_name = ".".join(file_path.with_suffix("").relative_to(project_root).parts)
                 module = cls._safe_Load_Module(file_path, module_name)
                 if not module:
                     continue
@@ -150,12 +142,13 @@ class DocCheck:
                 checker.run()
                 failed_total += checker.failed_tests
 
-            print(f"\nDocCheck Summary: scanned {tested_files} files.")
+            #print(f"\nDocCheck Summary: scanned {tested_files} files.")
             if failed_total:
                 print(f"❌ {failed_total} docstring tests failed.")
                 sys.exit(1)
             else:
-                print("✅ All docstring tests passed successfully.")
+                #print("✅ All docstring tests passed successfully.")
+                pass
             return
 
         # Single-module mode
@@ -173,7 +166,7 @@ class DocCheck:
                 print(f"[ERROR] {err}")
                 sys.exit(1)
         else:
-            print("Usage: python -m doccheck [<module_name>]")
+            print("Usage: python -m doccheck [src/] [<module_name>]")
             sys.exit(1)
 
 
