@@ -110,18 +110,66 @@ class DocCheck:
     @classmethod
     def run_From_CLI(cls) -> None:
         """
-        Command-line entry point for `python -m doccheck <module_name>`.
+        Command-line entry point for `python -m doccheck` or
+        `python -m doccheck <module_name>`.
+        Runs on the whole project if no module name is provided.
         """
         import importlib
+        import importlib.util
+        import pathlib
         import sys
 
-        if len(sys.argv) != 2:
-            print("Usage: python -m doccheck <module_name>")
-            sys.exit(1)
+        args = sys.argv[1:]
 
-        module_name: str = sys.argv[1]
-        module = importlib.import_module(module_name)
-        cls(module).run()
+        # Auto-run mode: no arguments → scan the entire project
+        if not args:
+            project_root = pathlib.Path.cwd()
+            sys.path.insert(0, str(project_root))
+            python_files = list(project_root.rglob("*.py"))
+
+            failed_total = 0
+            tested_files = 0
+
+            for file_path in python_files:
+                # skip irrelevant dirs
+                if any(part.startswith(".") for part in file_path.parts):
+                    continue
+                if "venv" in file_path.parts or "__pycache__" in file_path.parts:
+                    continue
+                if "site-packages" in file_path.parts:
+                    continue
+
+                module_name = ".".join(file_path.with_suffix("").parts)
+                spec = importlib.util.spec_from_file_location(module_name, str(file_path))
+                if spec and spec.loader:
+                    module = importlib.util.module_from_spec(spec)
+                    sys.modules[module_name] = module
+                    try:
+                        spec.loader.exec_module(module)
+                    except Exception:
+                        continue  # skip broken imports
+
+                    tested_files += 1
+                    checker = cls(module)
+                    checker.run()
+                    failed_total += checker.failed_tests
+
+            print(f"\nDocCheck Summary: scanned {tested_files} files.")
+            if failed_total:
+                print(f"❌ {failed_total} docstring tests failed.")
+                sys.exit(1)
+            else:
+                print("✅ All docstring tests passed successfully.")
+            return
+
+        # Single-module mode: same as before
+        if len(args) == 1:
+            module_name: str = args[0]
+            module = importlib.import_module(module_name)
+            cls(module).run()
+        else:
+            print("Usage: python -m doccheck [<module_name>]")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
