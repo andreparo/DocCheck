@@ -31,7 +31,7 @@ class DocCheck:
             return a + b
     """
 
-    allowed_inline_tags: list[str] = [">>tests:"]
+    # TODO allowed_inline_tags: list[str] = [">>tests:"]
 
 
     def __init__(self, module: types.ModuleType) -> None:
