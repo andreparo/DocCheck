@@ -1,7 +1,7 @@
 - id: doccheck
   name: Run docstring assertions with DocCheck
   description: "Evaluates >>test: lines in docstrings and asserts they pass."
-  entry: python -m doccheck
+  entry: doccheck
   language: python
   types: [python]
   require_serial: true
