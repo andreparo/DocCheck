@@ -1,7 +1,7 @@
 - id: doccheck
   name: Run DocCheck embedded tests
   description: Runs embedded docstring tests across the project.
-  entry: python3 doccheck.py
-  language: system
+  entry: doccheck
+  language: python
   types: [python]
   pass_filenames: false
