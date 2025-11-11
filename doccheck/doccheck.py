@@ -156,21 +156,12 @@ class DocCheck:
         for class_instance in cls.classes_list:
             tmp_list: list[str] = []
 
-            class_doc = inspect.getdoc(class_instance)
-            if class_doc:
-                tmp_list.extend(safe_Splitlines_Preserving_Parentheses(class_doc))
-
-            for name, member in inspect.getmembers(class_instance):
-                if inspect.isfunction(member) or isinstance(member, (classmethod, staticmethod)):
-                    func_obj = (
-                        member
-                        if inspect.isfunction(member)
-                        else member.__func__  # unwrap classmethod or staticmethod
-                    )
-                    method_doc = inspect.getdoc(func_obj)
-                    if method_doc:
-                        tmp_list.extend(safe_Splitlines_Preserving_Parentheses(method_doc))
-
+            source_code: str = inspect.getsource(class_instance)
+            inline_doc_blocks: list[str] = re.findall(r'"""(.*?)"""', source_code, flags=re.DOTALL)
+            for block in inline_doc_blocks:
+                cleaned_block = block.strip()
+                if cleaned_block not in (inspect.getdoc(class_instance) or ""):
+                    tmp_list.extend(safe_Splitlines_Preserving_Parentheses(cleaned_block))
 
             setattr(class_instance, "_docstrings", tmp_list.copy())
             print(f"Found {len(tmp_list)} docstring lines for class {class_instance.__name__}")
@@ -290,7 +281,7 @@ def main() -> None:
     args: list[str] = sys.argv[1:]
 
     if not args:
-        path = "sandbox"
+        path = "doccheck/sandbox"
     else:
         path = args[0]
     
