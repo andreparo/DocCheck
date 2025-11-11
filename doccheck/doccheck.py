@@ -213,11 +213,13 @@ class DocCheck:
     def run_Classes_Tests(cls) -> bool:
 
         result: bool = True
+        test_processed: int = 0
 
         for class_instance in cls.classes_list:
 
             for doc in class_instance._docstrings:
                 if ">>test:" in doc or ">>error:" in doc:
+                    test_processed += 1
 
                     payload: str = doc.split(":")[-1]
 
@@ -239,6 +241,7 @@ class DocCheck:
                             test_result = eval(payload, eval_env)
                             print(f"Executed test in class {class_instance.__name__}, payload: {payload}\nPASSED: {test_result}\n")
                             result = result and test_result
+
                         except Exception as error:
                             print(f"Error while evaluating test {payload} for class {class_instance.__name__}: {error}\nPASSED: False\n")
                             result = False
@@ -252,7 +255,12 @@ class DocCheck:
                         except Exception as err:
                             print(f"Executed error test in class {class_instance.__name__}, payload: {payload}\nPASSED: True\n")
                             result = True
-        return result
+        
+        if test_processed > 0:
+            return result
+        else:
+            print("Error: to use doccheck at least one test must pass")
+            return False
 
     @classmethod
     def run(cls, path: str) -> bool:
