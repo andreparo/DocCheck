@@ -1,0 +1,1 @@
+from doccheck.doccheck import main

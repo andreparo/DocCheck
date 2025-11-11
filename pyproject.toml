@@ -1,7 +1,10 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "doccheck"
-version = "0.1.22"
+version = "1.0.7"
 description = "A minimal doctest-like tool for testing expressions inside docstrings"
 authors = [{ name = "Andrea Parodi", email = "andrea.parodi.mi@gmail.com" }]
 license = "MIT"
@@ -13,4 +16,8 @@ Homepage = "https://github.com/andreparo/DocCheck"
 Repository = "https://github.com/andreparo/DocCheck"
 
 [project.scripts]
-doccheck = "doccheck:main"
+doccheck = "doccheck.doccheck:main"
+
+[tool.setuptools.packages.find]
+include = ["doccheck"]
+exclude = ["doccheck/sandbox"]
