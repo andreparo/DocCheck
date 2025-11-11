@@ -15,5 +15,6 @@ class DraftClass:
         
         >>test: cls.example1.draft_Format() == "2.6.hello."
         >>test: cls.example1.draft_Format("ADD") == "2.6.hello.ADD"
+        >>error: 10/0
         """
         return f"{self.a}.{self.b}.{self.c}.{additional_text}"

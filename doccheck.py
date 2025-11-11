@@ -169,7 +169,7 @@ class DocCheck:
             print(f"Found {len(tmp_list)} docstring lines for class {class_instance.__name__}")
 
     @classmethod
-    def load_Classes_Examples(cls) -> None:
+    def load_Classes_Examples(cls) -> bool:
         """Load for each class the example variables"""
         for class_instance in cls.classes_list:
 
@@ -201,12 +201,13 @@ class DocCheck:
                     try:
                         example_object = eval(payload, eval_env)
                         setattr(class_instance, f"example{example_id}", example_object)
-                        print(f"Loaded example{example_id} for class {class_instance.__name__}: payload: {doc}\n")
+                        print(f"Loaded example{example_id} for class {class_instance.__name__}: payload: {doc}\nSUCCESS: True\n")
                     except Exception as error:
-                        print(f"Error while evaluating example{example_id} for class {class_instance.__name__}: {error=} {doc=}")
-                        sys.exit(1)
+                        print(f"Error while evaluating example{example_id} for class {class_instance.__name__}: {error=} {doc=}\nSUCCESS: False\n")
+                        return False
 
                     setattr(class_instance, f"example{example_id}", example_object)
+        return True
 
     @classmethod
     def run_Classes_Tests(cls) -> bool:
@@ -239,13 +240,13 @@ class DocCheck:
                             print(f"Executed test in class {class_instance.__name__}, payload: {payload}\nPASSED: {test_result}\n")
                             result = result and test_result
                         except Exception as error:
-                            print(f"Error while evaluating test {payload} for class {class_instance.__name__}: {error}")
+                            print(f"Error while evaluating test {payload} for class {class_instance.__name__}: {error}\nPASSED: False\n")
                             result = False
 
                     elif ">>error:" in doc:
                         try:
                             test_result = eval(payload, eval_env)
-                            print(f"Error while evaluating error test {payload} for class {class_instance.__name__}: no error trown")
+                            print(f"Error while evaluating error test {payload} for class {class_instance.__name__}: no error trown\nPASSED: False\n")
                             result = False
                         except Exception as err:
                             print(f"Executed error test in class {class_instance.__name__}, payload: {payload}\nPASSED: True\n")
@@ -261,11 +262,12 @@ class DocCheck:
         print("\n")
         DocCheck.load_Classes_Docstrings()
         print("\n")
-        DocCheck.load_Classes_Examples()
+        res = DocCheck.load_Classes_Examples()
+        if res is False:
+            return False
         print("\n")
-        DocCheck.run_Classes_Tests()
-        return False
-
+        return DocCheck.run_Classes_Tests()
+        
 
 
 if __name__ == "__main__":
