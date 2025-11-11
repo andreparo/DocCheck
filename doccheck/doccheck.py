@@ -148,9 +148,7 @@ class DocCheck:
             # Standard split; also strip and drop empty lines
             logical_lines: list[str] = []
             for raw_line in merged_text.splitlines():
-                line: str = ' '.join(raw_line.split())  # collapse internal whitespace nicely
-                if line:
-                    logical_lines.append(line)
+                logical_lines.append(raw_line)
             return logical_lines
 
         for class_instance in cls.classes_list:
