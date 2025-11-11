@@ -161,7 +161,7 @@ class DocCheck:
             for block in inline_doc_blocks:
                 cleaned_block = block.strip()
                 if cleaned_block not in (inspect.getdoc(class_instance) or ""):
-                    tmp_list.extend(safe_Splitlines_Preserving_Parentheses(cleaned_block))
+                    tmp_list.extend(safe_Splitlines_Preserving_Parentheses(block))
 
             setattr(class_instance, "_docstrings", tmp_list.copy())
             print(f"Found {len(tmp_list)} docstring lines for class {class_instance.__name__}")
