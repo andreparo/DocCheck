@@ -247,11 +247,11 @@ class DocCheck:
                         try:
                             test_result = eval(payload, eval_env)
                             print(f"Error while evaluating error test {payload} for class {class_instance.__name__}: no error trown\nPASSED: False\n")
-                            result = result and test_result
+                            result = False
                             
                         except Exception as err:
                             print(f"Executed error test in class {class_instance.__name__}, payload: {payload}\nPASSED: True\n")
-                            result = False
+                            result = True
         return result
 
     @classmethod
