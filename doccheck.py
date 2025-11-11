@@ -209,7 +209,9 @@ class DocCheck:
                     setattr(class_instance, f"example{example_id}", example_object)
 
     @classmethod
-    def run_Classes_Tests(cls) -> None:
+    def run_Classes_Tests(cls) -> bool:
+
+        result: bool = True
 
         for class_instance in cls.classes_list:
 
@@ -235,17 +237,20 @@ class DocCheck:
                         try:
                             test_result = eval(payload, eval_env)
                             print(f"Executed test in class {class_instance.__name__}, payload: {payload}\nPASSED: {test_result}\n")
+                            result = result and test_result
                         except Exception as error:
                             print(f"Error while evaluating test {payload} for class {class_instance.__name__}: {error}")
-                            sys.exit(1)
+                            result = False
 
                     elif ">>error:" in doc:
                         try:
                             test_result = eval(payload, eval_env)
                             print(f"Error while evaluating error test {payload} for class {class_instance.__name__}: no error trown")
-                            sys.exit(1)
+                            result = False
                         except Exception as err:
                             print(f"Executed error test in class {class_instance.__name__}, payload: {payload}\nPASSED: True\n")
+                            result = result and test_result
+        return result
 
     @classmethod
     def run(cls, path: str) -> bool:
@@ -262,5 +267,15 @@ class DocCheck:
         return False
 
 
+
 if __name__ == "__main__":
-    DocCheck.run("sandbox")
+    args: list[str] = sys.argv[1:]
+
+    if not args:
+        path = "sandbox"
+    else:
+        path = args[0]
+    
+    result: bool = DocCheck.run(path)
+
+    sys.exit(0 if result else 1)
