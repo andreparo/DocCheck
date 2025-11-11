@@ -160,10 +160,17 @@ class DocCheck:
             if class_doc:
                 tmp_list.extend(safe_Splitlines_Preserving_Parentheses(class_doc))
 
-            for _, method in inspect.getmembers(class_instance, inspect.isfunction):
-                method_doc = inspect.getdoc(method)
-                if method_doc:
-                    tmp_list.extend(safe_Splitlines_Preserving_Parentheses(method_doc))
+            for name, member in inspect.getmembers(class_instance):
+                if inspect.isfunction(member) or isinstance(member, (classmethod, staticmethod)):
+                    func_obj = (
+                        member
+                        if inspect.isfunction(member)
+                        else member.__func__  # unwrap classmethod or staticmethod
+                    )
+                    method_doc = inspect.getdoc(func_obj)
+                    if method_doc:
+                        tmp_list.extend(safe_Splitlines_Preserving_Parentheses(method_doc))
+
 
             setattr(class_instance, "_docstrings", tmp_list.copy())
             print(f"Found {len(tmp_list)} docstring lines for class {class_instance.__name__}")
