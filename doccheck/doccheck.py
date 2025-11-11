@@ -250,7 +250,6 @@ class DocCheck:
                             
                         except Exception as err:
                             print(f"Executed error test in class {class_instance.__name__}, payload: {payload}\nPASSED: True\n")
-                            result = result and test_result
         
         if test_processed > 0:
             return result
