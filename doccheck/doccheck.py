@@ -281,6 +281,8 @@ def main() -> None:
     
     result: bool = DocCheck.run(path)
 
+    print(f"returning test result: {result}")
+
     sys.exit(0 if result else 1)
 
 if __name__ == "__main__":
