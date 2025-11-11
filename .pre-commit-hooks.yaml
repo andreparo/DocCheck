@@ -1,7 +1,7 @@
 - id: doccheck
   name: DocCheck validation
-  entry: python3 doccheck.py
-  language: system
+  entry: doccheck
+  language: python
   description: "Run DocCheck docstring-based validation."
   types: [python]
   pass_filenames: false
