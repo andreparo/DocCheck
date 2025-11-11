@@ -1,6 +1,3 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
 
 [project]
 name = "doccheck"
@@ -16,4 +13,4 @@ Homepage = "https://github.com/andreparo/DocCheck"
 Repository = "https://github.com/andreparo/DocCheck"
 
 [project.scripts]
-doccheck = "doccheck:DocCheck.run_From_CLI"
+doccheck = "doccheck:main"

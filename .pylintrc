@@ -1,0 +1,48 @@
+[MASTER]
+disable=all
+
+load-plugins=pylint.extensions.typing
+jobs=4
+# Enable selected checks
+enable=
+    invalid-name,        
+    duplicate-key,          
+    superfluous-parens,    
+    dangerous-default-value,
+    useless-return,
+    unbalanced-tuple-unpacking,
+    unnecessary-pass,
+    empty-docstring,
+    bad-classmethod-argument,
+    inconsistent-return-statements,
+    #missing-class-docstring, 
+    #missing-function-docstring,
+    
+
+# Other possible
+# duplicate-code
+# 
+# maybe I should force docstring into a specific style, 
+# forcing dictionaries to have a structure?
+
+
+
+
+[NAMING]
+# PascalCase for class names, including accented letters
+class-rgx=^[A-ZÀÈÉÌÒÙ][a-zàèéìòùA-ZÀÈÉÌÒÙ0-9]+$
+
+# this_is_a_variable or àè_variable, and THIS_IS_A_CONSTANT
+variable-rgx=^([A-ZÀÈÉÌÒÙ_][A-ZÀÈÉÌÒÙ0-9_]*|[a-zàèéìòù_][a-zàèéìòù0-9_]*)$
+const-rgx=^([A-ZÀÈÉÌÒÙ_][A-ZÀÈÉÌÒÙ0-9_]*|[a-zàèéìòù_][a-zàèéìòù0-9_]*)$
+attr-rgx=^([A-ZÀÈÉÌÒÙ_][A-ZÀÈÉÌÒÙ0-9_]*|[a-zàèéìòù_][a-zàèéìòù0-9_]*)$
+argument-rgx=^[a-zàèéìòù_][a-zàèéìòù0-9_]*$
+
+# this_Is_A_Function and __this_Is_Another_Function__, with accented letters
+function-rgx=^(_?[a-zàèéìòù]+(?:_[A-ZÀÈÉÌÒÙ]+[a-zàèéìòù0-9]*)*$|__[a-zàèéìòù]+(?:_[A-ZÀÈÉÌÒÙ]+[a-zàèéìòù0-9]*)*__)$
+method-rgx=^(_?[a-zàèéìòù]+(?:_[A-ZÀÈÉÌÒÙ]+[a-zàèéìòù0-9]*)*$|__[a-zàèéìòù]+(?:_[A-ZÀÈÉÌÒÙ]+[a-zàèéìòù0-9]*)*__)$
+
+# Allow any characters for module names
+module-rgx=.*$
+
+

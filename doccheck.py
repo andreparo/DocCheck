@@ -269,8 +269,8 @@ class DocCheck:
         return DocCheck.run_Classes_Tests()
         
 
-
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point for the DocCheck CLI."""
     args: list[str] = sys.argv[1:]
 
     if not args:
@@ -281,3 +281,6 @@ if __name__ == "__main__":
     result: bool = DocCheck.run(path)
 
     sys.exit(0 if result else 1)
+
+if __name__ == "__main__":
+    main()
