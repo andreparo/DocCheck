@@ -105,6 +105,7 @@ class DocCheck:
             Split text into lines, but do not split when the newline occurs inside
             (), [] or {}. This handles nesting without regex.
             """
+
             result_chars: list[str] = []
             paren_depth: int = 0
             bracket_depth: int = 0
@@ -112,43 +113,44 @@ class DocCheck:
 
             # Walk each character; when inside any brackets, convert newline to space.
             for ch in text:
-                if ch == '(':
+                if ch == "(":
                     paren_depth += 1
                     result_chars.append(ch)
                     continue
-                if ch == ')':
+                if ch == ")":
                     paren_depth = max(0, paren_depth - 1)
                     result_chars.append(ch)
                     continue
-                if ch == '[':
+                if ch == "[":
                     bracket_depth += 1
                     result_chars.append(ch)
                     continue
-                if ch == ']':
+                if ch == "]":
                     bracket_depth = max(0, bracket_depth - 1)
                     result_chars.append(ch)
                     continue
-                if ch == '{':
+                if ch == "{":
                     brace_depth += 1
                     result_chars.append(ch)
                     continue
-                if ch == '}':
+                if ch == "}":
                     brace_depth = max(0, brace_depth - 1)
                     result_chars.append(ch)
                     continue
 
-                if ch == '\n' and (paren_depth > 0 or bracket_depth > 0 or brace_depth > 0):
+                if ch == "\n" and (paren_depth > 0 or bracket_depth > 0 or brace_depth > 0):
                     # Keep the content continuous when inside any bracket type
-                    result_chars.append(' ')
+                    result_chars.append(" ")
                 else:
                     result_chars.append(ch)
 
-            merged_text: str = ''.join(result_chars)
+            merged_text: str = "".join(result_chars)
 
             # Standard split; also strip and drop empty lines
             logical_lines: list[str] = []
             for raw_line in merged_text.splitlines():
                 logical_lines.append(raw_line)
+
             return logical_lines
 
         for class_instance in cls.classes_list:
@@ -156,27 +158,25 @@ class DocCheck:
 
             source_code: str = inspect.getsource(class_instance)
 
-            
-            source_code.replace("{", "⦃")  # LEFT WHITE CURLY BRACKET (U+2983)
-            source_code.replace("}", "⦄")  # RIGHT WHITE CURLY BRACKET (U+2984)
-            source_code.replace("[", "⟦")
-            source_code.replace("]", "⟧")
-            source_code.replace("(", "⟮")
-            source_code.replace(")", "⟯")
+            source_code = source_code.replace("{", "⦃")  # LEFT WHITE CURLY BRACKET (U+2983)
+            source_code = source_code.replace("}", "⦄")  # RIGHT WHITE CURLY BRACKET (U+2984)
+            source_code = source_code.replace("[", "⟦")
+            source_code = source_code.replace("]", "⟧")
+            source_code = source_code.replace("(", "⟮")
+            source_code = source_code.replace(")", "⟯")
 
             inline_doc_blocks: list[str] = re.findall(r'"""(.*?)"""', source_code, flags=re.DOTALL)
 
-            source_code.replace("⦃", "{")  # LEFT WHITE CURLY BRACKET (U+2983)
-            source_code.replace("⦄", "}")  # RIGHT WHITE CURLY BRACKET (U+2984)
-            source_code.replace("⟦", "[")
-            source_code.replace("⟧", "]")
-            source_code.replace("⟮", "(")
-            source_code.replace("⟯", ")")
-
             for block in inline_doc_blocks:
-                cleaned_block = block.strip()
-                if cleaned_block not in (inspect.getdoc(class_instance) or ""):
-                    tmp_list.extend(safe_Splitlines_Preserving_Parentheses(block))
+
+                block = block.replace("⦃", "{")  # LEFT WHITE CURLY BRACKET (U+2983)
+                block = block.replace("⦄", "}")  # RIGHT WHITE CURLY BRACKET (U+2984)
+                block = block.replace("⟦", "[")
+                block = block.replace("⟧", "]")
+                block = block.replace("⟮", "(")
+                block = block.replace("⟯", ")")
+
+                tmp_list.extend(safe_Splitlines_Preserving_Parentheses(block))
 
             setattr(class_instance, "_docstrings", tmp_list.copy())
             print(f"Found {len(tmp_list)} docstring lines for class {class_instance.__name__}")
@@ -187,6 +187,7 @@ class DocCheck:
         for class_instance in cls.classes_list:
 
             for doc in class_instance._docstrings:
+
                 if ">>example" in doc:
 
                     match = re.search(r">>example(\d+):", doc)
@@ -196,7 +197,7 @@ class DocCheck:
 
                     example_id: int = int(match.group(1))
 
-                    payload: str = doc.split(":")[-1]
+                    payload: str = re.split(r">>example\d*:", doc, maxsplit=1)[-1].strip()
 
                     # Prepare a safe evaluation context
                     module_globals: dict[str, Any] = {}
@@ -216,7 +217,9 @@ class DocCheck:
                         setattr(class_instance, f"example{example_id}", example_object)
                         print(f"Loaded example{example_id} for class {class_instance.__name__}: payload: {doc}\nSUCCESS: True\n")
                     except Exception as error:
-                        print(f"Error while evaluating example{example_id} for class {class_instance.__name__}: {error=} {doc=}\nSUCCESS: False\n")
+                        print(
+                            f"Error while evaluating example{example_id} for class {class_instance.__name__}: {error=} {doc=}\nSUCCESS: False\n"
+                        )
                         return False
 
                     setattr(class_instance, f"example{example_id}", example_object)
@@ -234,7 +237,10 @@ class DocCheck:
                 if ">>test:" in doc or ">>error:" in doc:
                     test_processed += 1
 
-                    payload: str = doc.split(":")[-1]
+                    payload = doc.split(">>test:")[-1]
+                    payload = payload.split(">>error:")[-1]
+
+                    print(f"{payload=}")
 
                     # Prepare a safe evaluation context
                     module_globals: dict[str, Any] = {}
@@ -256,18 +262,22 @@ class DocCheck:
                             result = result and test_result
 
                         except Exception as error:
-                            print(f"Error while evaluating test {payload} for class {class_instance.__name__}: {error}\nPASSED: False\n")
+                            print(
+                                f"Error while evaluating test {payload} for class {class_instance.__name__}: {error}\nPASSED: False\n"
+                            )
                             result = False
 
                     elif ">>error:" in doc:
                         try:
                             test_result = eval(payload, eval_env)
-                            print(f"Error while evaluating error test {payload} for class {class_instance.__name__}: no error trown\nPASSED: False\n")
+                            print(
+                                f"Error while evaluating error test {payload} for class {class_instance.__name__}: no error trown\nPASSED: False\n"
+                            )
                             result = False
-                            
+
                         except Exception as err:
                             print(f"Executed error test in class {class_instance.__name__}, payload: {payload}\nPASSED: True\n")
-        
+
         if test_processed > 0:
             return result
         else:
@@ -288,7 +298,7 @@ class DocCheck:
             return False
         print("\n")
         return DocCheck.run_Classes_Tests()
-        
+
 
 def main() -> None:
     """Entry point for the DocCheck CLI."""
@@ -298,12 +308,13 @@ def main() -> None:
         path = "doccheck/sandbox"
     else:
         path = args[0]
-    
+
     result: bool = DocCheck.run(path)
 
     print(f"returning test result: {result}")
 
     sys.exit(0 if result else 1)
+
 
 if __name__ == "__main__":
     main()

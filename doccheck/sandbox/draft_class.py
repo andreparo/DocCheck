@@ -9,10 +9,9 @@ class DraftClass:
         self.b: int = b
         self.c: str = c
 
-
-    def draft_Format(self, additional_text: str="") -> str:
+    def draft_Format(self, additional_text: str = "") -> str:
         """
-        
+
         >>test: cls.example1.draft_Format() == "2.6.hello."
         >>test: cls.example1.draft_Format("ADD") == "2.6.hello.ADD"
         >>error: 10/0
