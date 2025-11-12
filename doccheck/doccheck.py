@@ -155,7 +155,24 @@ class DocCheck:
             tmp_list: list[str] = []
 
             source_code: str = inspect.getsource(class_instance)
+
+            
+            source_code.replace("{", "⦃")  # LEFT WHITE CURLY BRACKET (U+2983)
+            source_code.replace("}", "⦄")  # RIGHT WHITE CURLY BRACKET (U+2984)
+            source_code.replace("[", "⟦")
+            source_code.replace("]", "⟧")
+            source_code.replace("(", "⟮")
+            source_code.replace(")", "⟯")
+
             inline_doc_blocks: list[str] = re.findall(r'"""(.*?)"""', source_code, flags=re.DOTALL)
+
+            source_code.replace("⦃", "{")  # LEFT WHITE CURLY BRACKET (U+2983)
+            source_code.replace("⦄", "}")  # RIGHT WHITE CURLY BRACKET (U+2984)
+            source_code.replace("⟦", "[")
+            source_code.replace("⟧", "]")
+            source_code.replace("⟮", "(")
+            source_code.replace("⟯", ")")
+
             for block in inline_doc_blocks:
                 cleaned_block = block.strip()
                 if cleaned_block not in (inspect.getdoc(class_instance) or ""):
