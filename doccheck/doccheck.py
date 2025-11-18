@@ -221,6 +221,7 @@ class DocCheck:
                             f"Error while evaluating example{example_id} for class {class_instance.__name__}: {error=} {doc=}\nSUCCESS: False\n"
                         )
                         return False
+                    print("!!!!!!!!!!!\n!!!!!!!!!!!\n!!!!!!!!!!!\n")
 
                     setattr(class_instance, f"example{example_id}", example_object)
         return True
@@ -260,12 +261,15 @@ class DocCheck:
                             test_result = eval(payload, eval_env)
                             print(f"Executed test in class {class_instance.__name__}, payload: {payload}\nPASSED: {test_result}\n")
                             result = result and test_result
+                            if test_result is False:
+                                print("!!!!!!!!!!!\n!!!!!!!!!!!\n!!!!!!!!!!!\n")
 
                         except Exception as error:
                             print(
                                 f"Error while evaluating test {payload} for class {class_instance.__name__}: {error}\nPASSED: False\n"
                             )
                             result = False
+                            print("!!!!!!!!!!!\n!!!!!!!!!!!\n!!!!!!!!!!!\n")
 
                     elif ">>error:" in doc:
                         try:
@@ -274,6 +278,7 @@ class DocCheck:
                                 f"Error while evaluating error test {payload} for class {class_instance.__name__}: no error trown\nPASSED: False\n"
                             )
                             result = False
+                            print("!!!!!!!!!!!\n!!!!!!!!!!!\n!!!!!!!!!!!\n")
 
                         except Exception as err:
                             print(f"Executed error test in class {class_instance.__name__}, payload: {payload}\nPASSED: True\n")
