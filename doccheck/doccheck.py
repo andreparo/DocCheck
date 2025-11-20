@@ -7,6 +7,8 @@ from pathlib import Path
 import os
 from typing import Any
 import re
+import traceback
+
 
 """
 
@@ -76,11 +78,15 @@ class DocCheck:
         # Walk through the package hierarchy
         for module_info in pkgutil.walk_packages(cls.root_package.__path__, cls.root_package.__name__ + "."):
             try:
+                print(f"Attempting to load module: {module_info.name}")
                 module = importlib.import_module(module_info.name)
+                print(f"Module {module_info.name} imported correctly.\n Now attempting to load classes:")
                 cls.modules_list.append(module)
 
                 # Collect all classes defined in the current module (not imported)
                 for _, class_obj in inspect.getmembers(module, inspect.isclass):
+                    print(f"Attempting to import class: {class_obj} ...")
+
                     if not inspect.isclass(class_obj):
                         print(f"Error: impossible to load class {class_obj}: it's not a class")
                         sys.exit(1)
@@ -93,7 +99,8 @@ class DocCheck:
                     cls.classes_list.append(class_obj)
 
             except Exception as error:
-                print(f"Error: impossible to load module {module_info.name}: {error}")
+                print(f"Error: impossible to load module {module_info.name}: {repr(error)}")
+                traceback.print_exc()
                 sys.exit(1)
 
     @classmethod
@@ -215,10 +222,10 @@ class DocCheck:
                     try:
                         example_object = eval(payload, eval_env)
                         setattr(class_instance, f"example{example_id}", example_object)
-                        print(f"Loaded example{example_id} for class {class_instance.__name__}: payload: {doc}\nSUCCESS: True\n")
+                        print(f"Loaded example{example_id} for class {class_instance.__name__}: payload: {doc}\nSUCCESS: True")
                     except Exception as error:
                         print(
-                            f"Error while evaluating example{example_id} for class {class_instance.__name__}: {error=} {doc=}\nSUCCESS: False\n"
+                            f"Error while evaluating example{example_id} for class {class_instance.__name__}: {error=} {doc=}\nSUCCESS: False"
                         )
                         return False
                     print("!!!!!!!!!!!\n!!!!!!!!!!!\n!!!!!!!!!!!\n")
@@ -259,15 +266,13 @@ class DocCheck:
                     if ">>test:" in doc:
                         try:
                             test_result = eval(payload, eval_env)
-                            print(f"Executed test in class {class_instance.__name__}, payload: {payload}\nPASSED: {test_result}\n")
+                            print(f"Executed test in class {class_instance.__name__}, payload: {payload}\nPASSED: {test_result}")
                             result = result and test_result
                             if test_result is False:
                                 print("!!!!!!!!!!!\n!!!!!!!!!!!\n!!!!!!!!!!!\n")
 
                         except Exception as error:
-                            print(
-                                f"Error while evaluating test {payload} for class {class_instance.__name__}: {error}\nPASSED: False\n"
-                            )
+                            print(f"Error while evaluating test {payload} for class {class_instance.__name__}: {error}\nPASSED: False")
                             result = False
                             print("!!!!!!!!!!!\n!!!!!!!!!!!\n!!!!!!!!!!!\n")
 
@@ -275,13 +280,13 @@ class DocCheck:
                         try:
                             test_result = eval(payload, eval_env)
                             print(
-                                f"Error while evaluating error test {payload} for class {class_instance.__name__}: no error trown\nPASSED: False\n"
+                                f"Error while evaluating error test {payload} for class {class_instance.__name__}: no error trown\nPASSED: False"
                             )
                             result = False
                             print("!!!!!!!!!!!\n!!!!!!!!!!!\n!!!!!!!!!!!\n")
 
                         except Exception as err:
-                            print(f"Executed error test in class {class_instance.__name__}, payload: {payload}\nPASSED: True\n")
+                            print(f"Executed error test in class {class_instance.__name__}, payload: {payload}\nPASSED: True")
 
         if test_processed > 0:
             return result
