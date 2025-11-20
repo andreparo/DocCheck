@@ -46,6 +46,8 @@ class DocCheck:
     modules_list: list[ModuleType] = []
     classes_list: list[Any] = []
 
+    excludes: list[str] = []
+
     @classmethod
     def load_Root_Package_From_Path(cls, project_path: str) -> None:
         """Load the root package module object from a filesystem path."""
@@ -77,6 +79,15 @@ class DocCheck:
 
         # Walk through the package hierarchy
         for module_info in pkgutil.walk_packages(cls.root_package.__path__, cls.root_package.__name__ + "."):
+
+            # -----------------------------------------------------
+            # EXCLUSION FILTER (regex patterns specified via --exclude)
+            # -----------------------------------------------------
+            if any(re.search(pattern, module_info.name) for pattern in cls.excludes):
+                print(f"Skipping module {module_info.name} (excluded by regex)")
+                continue
+            # -----------------------------------------------------
+
             try:
                 print(f"Attempting to load module: {module_info.name}")
                 module = importlib.import_module(module_info.name)
@@ -311,13 +322,30 @@ class DocCheck:
 
 
 def main() -> None:
-    """Entry point for the DocCheck CLI."""
-    args: list[str] = sys.argv[1:]
+    """Entry point for the DocCheck CLI with --exclude support."""
+    raw_args = sys.argv[1:]
 
-    if not args:
+    path: str | None = None
+    exclude_patterns: list[str] = []
+
+    # Parse arguments
+    for arg in raw_args:
+        if arg.startswith("--exclude="):
+            pattern = arg.split("=", 1)[1]
+            exclude_patterns.append(pattern)
+        else:
+            path = arg
+
+    # If user didn't specify a path, default sandbox
+    if path is None:
         path = "doccheck/sandbox"
-    else:
-        path = args[0]
+
+    # Store exclude patterns into the DocCheck class
+    DocCheck.excludes = exclude_patterns
+
+    print(f"DocCheck starting on: {path}")
+    if exclude_patterns:
+        print(f"Excluding module patterns: {exclude_patterns}")
 
     result: bool = DocCheck.run(path)
 
